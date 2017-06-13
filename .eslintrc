@@ -17,5 +17,6 @@
     "radix": 0,
     "consistent-return": 0,
     "no-unused-expressions": 0,
+    "no-useless-return": 0,
     }
 }
