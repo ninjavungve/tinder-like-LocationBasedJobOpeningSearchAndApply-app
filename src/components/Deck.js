@@ -6,6 +6,7 @@ import {
   PanResponder,
   LayoutAnimation,
   UIManager,
+  Platform,
 } from 'react-native';
 
 // console.log(SCREEN_WIDTH); // 320
@@ -30,6 +31,7 @@ class Deck extends Component {
     onSwipeLeft: () => {},
     data: [],
     renderCard: () => {},
+    keyProp: 'id',
   };
 
   constructor(props) {
@@ -47,7 +49,7 @@ class Deck extends Component {
     this.panResponder = PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onPanResponderMove: (event, gesture) => {
-        //move right left only, x axis
+        // move right left only, x axis
         Animated.spring(this.position, {
           toValue: {
             x: gesture.dx,
@@ -79,13 +81,13 @@ class Deck extends Component {
   }
 
   componentWillUpdate() {
-    //android compatibility code
+    // android compatibility code
     UIManager.setLayoutAnimationEnabledExperimental &&
       UIManager.setLayoutAnimationEnabledExperimental(true);
     LayoutAnimation.spring();
   }
 
-  onSwipeComplete(direction) {
+  onSwipeComplete = (direction) => {
     const { onSwipeRight, onSwipeLeft, data } = this.props;
     // current item we are swiping
     const card = data[this.state.cardIndex];
@@ -93,11 +95,11 @@ class Deck extends Component {
     direction === 'right' ? onSwipeRight(card) : onSwipeLeft(card);
     // reset this.position NOT THROUGH STATE!
     this.position.setValue({ x: 0, y: 0 });
-    //increment the data[member] to render through state
+    // increment the data[member] to render through state
     this.setState({ cardIndex: this.state.cardIndex + 1 });
   }
 
-  getCardStyle() {
+  getCardStyle = () => {
     const position = this.position;
     // Transform takes this constant
     // interpolate position.x where screen_width/2 corellates to -30deg. This is a react-native API
@@ -105,21 +107,19 @@ class Deck extends Component {
       inputRange: [-SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2],
       outputRange: ['-30deg', '0deg', '30deg'],
     });
-    //interpolate opacity!
-    const opacity = position.x.interpolate({
-      inputRange: [-SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2],
-      outputRange: [0.25, 1, 0.25],
-    });
-
+    // interpolate opacity!
+    // const opacity = position.x.interpolate({
+    //   inputRange: [-SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2],
+    //   outputRange: [0.25, 1, 0.25],
+    // });
+  // opacity: opacity
     return {
       ...position.getLayout(),
       transform: [{ rotate }],
-      opacity: opacity,
     };
   }
-
   // throw the card right/left
-  forceSwipe(direction) {
+  forceSwipe= (direction) => {
     // animate out in the duration specified
     switch (direction) {
       case 'right':
@@ -151,50 +151,53 @@ class Deck extends Component {
     }
   }
 
-  renderCards() {
+  renderCards = () => {
+    const { keyProp } = this.props;
+
     if (this.state.cardIndex >= this.props.data.length) {
       return this.props.renderNomoreCards();
     }
-
     // only add animation to the first card..
     // reverse, otherwise last member is on top when stacked
-    return this.props.data
-      .map((card, index) => {
+    const deck = this.props.data.map((card, index) => {
         // If index=cardIndex, return animated,
         // if index < cardIndex, it's swiped, null
         // else return normally
 
-        switch (true) {
-          case index === this.state.cardIndex:
-            return (
+      const top = CARD_STACK_MULTIPLIER * (index - this.state.cardIndex);
+      const left = CARD_STACK_MULTIPLIER * (index - this.state.cardIndex);
+
+      switch (true) {
+        case index === this.state.cardIndex:
+          return (
               <Animated.View
-                key={card.jobkey}
+                key={card[keyProp]}
                 style={[this.getCardStyle(), styles.cardStyle]}
                 {...this.panResponder.panHandlers}
               >
                 {this.props.renderCard(card)}
               </Animated.View>
-            );
-          case index < this.state.cardIndex:
-            return null;
-          default:
-            let top = CARD_STACK_MULTIPLIER * (index - this.state.cardIndex);
-            let left = CARD_STACK_MULTIPLIER * (index - this.state.cardIndex);
-            return (
+          );
+        case index < this.state.cardIndex:
+          return null;
+        default:
+          return (
               <Animated.View
-                key={card.jobkey}
-                style={[styles.cardStyle, { top: top, left: left }]}
+                key={card[keyProp]}
+                style={[styles.cardStyle, { top, left }]}
               >
                 {this.props.renderCard(card)}
               </Animated.View>
-            );
-        }
-      })
-      .reverse();
+          );
+      }
+    });
+
+
+    return Platform.OS === 'android' ? deck : deck.reverse();
+
 
     // REVERSE AT THE END!!! or nothing will work
   }
-
   render() {
     return (
       <View>

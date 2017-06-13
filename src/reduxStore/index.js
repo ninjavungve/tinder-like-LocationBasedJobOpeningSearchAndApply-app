@@ -1,4 +1,7 @@
 import { combineReducers, createStore, applyMiddleware, compose } from 'redux';
+import { persistStore, autoRehydrate } from 'redux-persist';
+import { AsyncStorage } from 'react-native';
+
 
 import thunk from 'redux-thunk';
 
@@ -16,9 +19,13 @@ const configure = (initialState = {}) => {
 
   const reducer = combineReducers(REDUCERS_OBJECT);
 
-  const store = createStore(reducer, initialState, compose(applyMiddleware(thunk), window.devToolsExtension
-        ? window.devToolsExtension()
-        : f => f));
+  const store = createStore(reducer, initialState, compose(applyMiddleware(thunk), autoRehydrate(), window.devToolsExtension ? window.devToolsExtension() : f => f));
+
+
+// WHITELIST OR BLACKLIST STORE OBJECTS auth, job.. = INITIAL_STATE !!
+  persistStore(store, { storage: AsyncStorage });
+
+// ,
 
   return store;
 };

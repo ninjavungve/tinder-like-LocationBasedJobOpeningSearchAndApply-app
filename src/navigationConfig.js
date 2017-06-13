@@ -21,6 +21,12 @@ const AppNavigator = TabNavigator({
           settings: { screen: SettingsScreen },
         }),
       },
+    }, {
+      tabBarPosition: 'bottom',
+      swipeEnabled: false,
+      tabBarOptions: {
+        labelStyle: { fontSize: 12 },
+      },
     }),
   },
 }, {
